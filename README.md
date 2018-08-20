@@ -6,4 +6,6 @@ coredns web管理界面。
 * watch后端etcd的变化，通过websocket通知页面变更。
 
 
-![图片]（“12.png”）
+
+![展示](12.png)
+![展示](13.png)
