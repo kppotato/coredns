@@ -1,0 +1,71 @@
+{{define "dnsedit.html"}}
+{{template "header" }}
+<div class="content-wrapper">
+    <section class="content-header">
+        <h1>
+            {{ if .data }}编辑{{else}}添加{{end }}DNS记录
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="/admin/dns">dns</a></li>
+            <li class="active">{{ if .data }}edit{{else}}add{{end }}</li>
+        </ol>
+    </section>
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">填写CoreDns记录</h3>
+                    </div>
+                    <!-- form start -->
+                    <form class="form-horizontal" method="post">
+                        <div class="box-body">
+                            <div class="form-group">
+                                <label for="inputEmail3" class="col-sm-2 control-label">名称</label>
+
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" required id="name" name="name"
+                                           value="{{.data.Origin}}" placeholder="名称"  {{if .data }}readonly{{end}}>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputPassword3" class="col-sm-2 control-label">数据</label>
+
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" required id="data" name="data"
+                                           value="{{.data.NameServer}}"
+                                           placeholder="数据">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputPassword3" class="col-sm-2 control-label">TTL</label>
+
+                                <div class="col-sm-10">
+                                    <input type="number" class="form-control" id="ttl" name="ttl"
+                                           placeholder="TTL" value="{{if .data.TTL}}{{.data.TTL}}{{else}}0{{end}}">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.box-body -->
+                        <div class="box-footer">
+                            <button type="button" onclick="back()"  class="btn btn-default">返回</button>
+                            <button type="submit" class="btn btn-info pull-right">{{if .data}}编辑{{else}}添加{{end}}</button>
+                        </div>
+                        <!-- /.box-footer -->
+                    </form>
+                </div>
+
+            </div>
+        </div>
+        <!-- /.row -->
+    </section>
+</div>
+        <script>
+            function  back() {
+                window.location.href="/admin/dns"
+            }
+        </script>
+{{template "footer" }}
+{{end}}

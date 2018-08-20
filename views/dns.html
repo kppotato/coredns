@@ -1,0 +1,96 @@
+{{define "dns.html"}}
+{{template "header" }}
+<div class="content-wrapper">
+    <section class="content-header">
+        <h1>
+            Coredns
+            <small>dns管理列表</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="#">dns</a></li>
+            <li class="active">list</li>
+        </ol>
+    </section>
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box">
+                    <div class="box-header">
+                        <button type="button" class="btn btn-primary" onclick="javascript:window.location.href='/admin/dnsedit'">添加DNS</button>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>Origin</th>
+                                <th>Name Server</th>
+                                <th>TTL</th>
+                                <th>ETCD</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </section>
+    <!-- /.content -->
+</div>
+
+<!-- /.modal -->
+{{template "footer" }}
+<script>
+
+    $(function () {
+        // $('#example1').DataTable()
+        $('#example1').DataTable({
+            ajax: '/admin/etcdlist',
+            "columns": [
+                {"data": "Origin"},
+                {"data": "NameServer"},
+                {"data": "TTL"},
+                {"data": "Key"},
+                {"data": "Key"},
+            ],
+            "columnDefs": [{
+                "targets": -1,//编辑
+                "data": null,
+                "orderable": false,
+                "render": function (data, type, row, meta) {
+                    return "<a href='/admin/dnsedit?key=" + encodeURI(data) + "' class='btn btn-info' dataId='" + data + "' id='labelItem_list_edit'>修改</a>&nbsp;&nbsp;" +
+                            "<a href='javascript:void(0)' onclick='deletcd(this)' class='btn btn-danger ' etcdpath='"+row.Key+"' dataId='" + row.Origin + "' id='labelItem_list_del'>删除</a>";
+                }
+            },
+            ],
+            'paging': true,
+            'lengthChange': true,
+            'searching': true,
+            'ordering': true,
+            'info': true,
+            'autoWidth': false
+        })
+    })
+
+    function deletcd(obj) {
+        key = $(obj).attr("etcdpath")
+        var r = confirm("确定要删除域名:" + key)
+        if (r == true) {
+            $.get("/admin/deldns?key=" + key, function (data, status) {
+                if (status == "success" && data.Error == "") {
+                    window.location.reload()
+                } else {
+                    alert(data.Error)
+                }
+            })
+        }
+    }
+</script>
+{{end}}

@@ -1,0 +1,198 @@
+{{define "dns2.html"}}
+{{template "header" }}
+<div class="content-wrapper">
+    <section class="content-header">
+        <h1>
+            Coredns
+            <small>dns管理列表</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="#">dns</a></li>
+            <li class="active">list</li>
+        </ol>
+    </section>
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box">
+                    <div class="box-header">
+                        <button type="button" class="btn btn-primary"
+                                onclick="javascript:window.location.href='/admin/dnsedit'">添加DNS
+                        </button>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>Origin</th>
+                                <th>Name Server</th>
+                                <th>TTL</th>
+                                <th>ETCD</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+                <!-- /.box -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </section>
+    <!-- /.content -->
+</div>
+
+<!-- /.modal -->
+{{template "footer" }}
+<script>
+    //==========websocket
+    var mytable
+    (function ($) {
+        $.websocket = function (options) {
+            var defaults = {
+                domain: top.location.hostname,
+                port: 3398,
+                protocol: ""
+            };
+            var opts = $.extend(defaults, options);
+            var szServer = "ws://" + opts.domain + ":" + opts.port + "/" + opts.protocol;
+            var socket = null;
+            var bOpen = false;
+            var t1 = 0;
+            var t2 = 0;
+            var messageevent = {
+                onInit: function () {
+                    if (!("WebSocket" in window) && !("MozWebSocket" in window)) {
+                        return false;
+                    }
+                    if (("MozWebSocket" in window)) {
+                        socket = new MozWebSocket(szServer);
+                    } else {
+                        socket = new WebSocket(szServer);
+                    }
+                    if (opts.onInit) {
+                        opts.onInit();
+                    }
+                },
+                onOpen: function (event) {
+                    bOpen = true;
+                    if (opts.onOpen) {
+                        opts.onOpen(event);
+                    }
+                },
+                onSend: function (msg) {
+                    t1 = new Date().getTime();
+                    if (opts.onSend) {
+                        opts.onSend(msg);
+                    }
+                    socket.send(msg);
+                },
+                onMessage: function (msg) {
+                    t2 = new Date().getTime();
+                    if (opts.onMessage) {
+                        opts.onMessage(msg.data, t2 - t1);
+                    }
+                },
+                onError: function (event) {
+                    if (opts.onError) {
+                        opts.onError(event);
+                    }
+                },
+                onClose: function (event) {
+                    if (opts.onclose) {
+                        opts.onclose(event);
+                    }
+                    if (socket.close() != null) {
+                        socket = null;
+                    }
+                }
+            }
+
+            messageevent.onInit();
+            socket.onopen = messageevent.onOpen;
+            socket.onmessage = messageevent.onMessage;
+            socket.onerror = messageevent.onError;
+            socket.onclose = messageevent.onClose;
+
+            this.send = function (pData) {
+                if (bOpen == false) {
+                    return false;
+                }
+                messageevent.onSend(pData);
+                return true;
+            }
+            this.close = function () {
+                messageevent.onClose();
+            }
+            return this;
+        };
+    })(jQuery);
+    $(function () {
+        // $('#example1').DataTable()
+        mytable =$('#example1').DataTable({
+            ajax: '/admin/etcdlist',
+            "columns": [
+                {"data": "Origin"},
+                {"data": "NameServer"},
+                {"data": "TTL"},
+                {"data": "Key"},
+                {"data": "Key"},
+            ],
+            "columnDefs": [{
+                "targets": -1,//编辑
+                "data": null,
+                "orderable": false,
+                "render": function (data, type, row, meta) {
+                    return "<a href='/admin/dnsedit?key=" + encodeURI(data) + "' class='btn btn-info' dataId='" + data + "' id='labelItem_list_edit'>修改</a>&nbsp;&nbsp;" +
+                            "<a href='javascript:void(0)' onclick='deletcd(this)' class='btn btn-danger ' etcdpath='"+row.Key+"'  dataId='" + row.Origin + "' id='labelItem_list_del'>删除</a>";
+                }
+            },
+            ],
+            'paging': true,
+            'lengthChange': true,
+            'searching': true,
+            'ordering': true,
+            'info': true,
+            'autoWidth': false
+        })
+
+        var Socket1 = $.websocket({
+            domain: "192.168.20.23",   //这是与服务器的域名或IP
+            port: 9191,                  //这是服务器端口号
+            protocol: "ws",            //这东西可有可无,组合起来就是 ws://www.qhnovel.com:8080/test
+            onOpen: function (event) {
+                // alert("已经与服务端握手,onOpen可省略不写");
+            },
+            onError: function (event) {
+                // alert("发生了错误,onError可省略不写");
+            },
+            onSend: function (msg) {
+                // alert("发送数据额外的代码,可省略不写");
+            },
+            onMessage: function (result, nTime) {
+                mytable.ajax.reload()
+            }
+        });
+        Socket1.send("hao a")
+    })
+    function deletcd(obj) {
+        host = $(obj).attr("dataid")
+        key = $(obj).attr("etcdpath")
+        var r = confirm("确定要删除域名:" + host)
+        if (r == true) {
+            $.get("/admin/deldns?key=" + key, function (data, status) {
+                if (status == "success" && data.Error == "") {
+                    // window.location.reload()
+                } else {
+                    // alert(data.Error)
+                }
+            })
+        }
+    }
+</script>
+{{end}}
